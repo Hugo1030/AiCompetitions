@@ -1,0 +1,24 @@
+# for Du4AI
+## usage: 
+##  生成requirements.txt文件
+# pip freeze > requirements.txt
+##  安装requirements.txt依赖
+# pip install -r requirements.txt
+#
+#   for working
+pandas==0.22.0
+seaborn==0.8.1
+numpy==1.13.3
+matplotlib==2.1.0
+scikit-learn==0.19.1
+lightgbm==2.1.0
+h2o==3.16.0.4
+bayesian-optimization==0.6.0
+tqdm==4.19.5
+# xgboost
+# 参考:xgboost/python-package at master · dmlc/xgboost 
+#    https://github.com/dmlc/xgboost/tree/master/python-package
+# macOS 中得手工安装
+
+#   for debug/learnning
+jupyter==1.0.0

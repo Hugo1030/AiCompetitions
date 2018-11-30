@@ -1,0 +1,369 @@
+-- 索引所有当前 SQL 使用以及数据集关系
+-- 18.3.3 DAMA init.
+-- 18.3.3 LiChuan 更新数据结构
+-- 18.3.5 LiChuan sale_quantity 进行 Log 变换, 以 10 为底
+--      + LiChuan oil_price全国历史油价特征提取
+--      + LiCHuan 使用官方数据集重新跑一遍, 且补足数据结构
+--      + caijun 生成基础窗口数据集
+--      + LiChuan 提取上月/12月销量和 总体销量特征
+-- 18.3.6 LiChuan 对 Numerical 特征进行归一化, 且并入 base_feautres
+--      + LiChuan 当月分省市多少 class_id 在销售
+--      + LiChuan 提取 year/ month 特征
+--      + caijun 提取2M/3M/6M/12M的sum,avg,std特征窗口
+--      + caijun 提取去年环比数据
+-- 18.3.7 LiChuan 提取分省市 class_id 已经销售了多少个月
+--      + LiChuan 购置税特征
+--      + LiChuan 将 cnt_classid 的全部空值填 0
+--      + LiChuan 将 2/3/6/12 和上月环比 特征做进数据集
+--      + LiChuan 转换 4个 特征数据类型
+--      + caijun 提取2/3/6/12月的max,min特征窗口
+-- 18.3.8 LiChuan 并入 2/3/6/12月的max,min特征窗口
+--      + LiChuan 切分数据训练/测试集 
+--      + LiChuan 修改 sale_quantity , 变成 2 为底 + 1, 且重新跑一遍所有数据集
+-- 18.3.9 LiChuan XGBoost 第一轮基础参数 + 全特征去掉 2012, 平均分数
+-- 18.3.10 LiChuan 是否包含春节特征提取
+--         DAMA 重新从国家统计局提取 2+3+16种非直接关联网络经济数值
+-- 18.3.11 LiChuan 上月产量特征
+-- 18.3.12 LiChuan 销量向前顺延一个月, 重新制作数据集
+-- 18.3.13 Woody 策略三基础表制作，产量和销量基础表
+-- 
+-- ****** 原始数据集 *******
+-- 全国分城市分车型零售 -> yc_passenger_car_sales
+-- 全国整体车型产量 -> yc_passenger_car_yields
+-- 全国宏观经济月度 -> yc_macro_econ
+-- 要求:
+--      根据测试集 yc_result_sample_b 
+--      生成结果表 yc_result_submit_b
+--      
+-- ****** 3.14 结果表格 *******
+-- 策略一: XGBoost => yc_result_submit_b_xgboost_stragy_one
+--        GBDT => yc_result_submit_b_gbdt_stragy_one_checked
+-- 策略二: XGBoost => yc_result_submit_b_xgboost_stragy_two
+--        GBDT => yc_result_submit_b_gbdt_stragy_two_checked
+-- 策略三: XGBoost => yc_result_submit_b_xgboost_stragy_three
+--        GBDT => yc_result_submit_b_gbdt_stragy_three
+--        
+-- ****** 最新数据集 *******
+-- 最终融合: GBDT * 0.6 + XGBoost * 0.4 => yc_result_submit_b
+-- 策略一(填充 79 版 18.1 销量) :
+-- => ycc_sales_lichuan0313_feature_16_produce_quantity
+-- 策略二(销量顺延 1 个月):
+-- => ycc_sales_lichuan0313_feature_16_produce_quantity_shift1m
+-- 策略三(两个月的积/差/商/和)
+-- ADD: => ycc_sales_lichuan0314_feature_16_produce_quantity_add
+-- MINUS: => ycc_sales_lichuan0314_feature_16_produce_quantity_minus
+-- 
+-- ****** 最新 class_id 描述团 ******
+-- => ycc_sales_lichuan0307_feature_3_change_double
+-- 
+-- ****** 整体数据结构 ******
+-- sale_date/province_id/city_id/class_id 轮转
+-- 即整体维度空间 72 * 31 * 342 * class_id
+-- 
+-- ****** 特征处理起点 ******
+-- 策略一/二 特征处理起点
+-- => ycc_sales_lichuan0313_traintest_method1 
+-- 
+-- ****** 结果提交 *******
+-- 当天放入 yc_result_submit_a, 系统自动扫描
+-- 第二天早上出结果后, 登陆成绩
+-- 然后, 将表格改名为  yc_result_策略_分数
+-- 例如: yc_result_baseline_1.31
+-- 
+-- (￣▽￣) 大家有什么增补, 请在头部嗯哼变动
+-- 
+-- 目的: 固定的说明所有 SQL 和数据集的生成可用关系
+-- 
+-- # DClean
+-- DAMA/
+--  dclean_01_count_all_key_fields->dclean_02_count_all_key_fields_report
+--      <= yc_passenger_car_sales
+--      => _statistics_ycc_sales* 原始数据集关键数据量统计
+--      
+--      dclean_0_null_kill 
+--          <= yc_passenger_car_sales
+--          => ycc_sales_dama0302_dclean_0_killnull (原始无 NULL 数据集)
+--      dclean_1_reorder_fields => ycc_sales_dama0302_dclean_8_reorder_fields
+--      
+--      chk_price_level_value_CHOAS
+--          <= ycc_sales_dama0302_dclean_8_reorder_fields 
+--          统计乱码数据行情况
+--      chk_price_level_CHOAS_value
+--          <= ycc_sales_dama0302_dclean_8_reorder_fields 
+--          抽取乱码数据行样本
+--      chk_rated_passenger_value_CHOAS
+--          <= ycc_sales_dama0302_dclean_8_reorder_fields 
+--          统计乱码数据行情况
+--      chk_rated_passenger_CHOAS_value
+--          <= ycc_sales_dama0302_dclean_8_reorder_fields 
+--          抽取乱码数据行样本
+--          
+--      dclean_2_empty_aim_table => ycc_sales_dama0303_dclean_13_kill_chaos_fields
+--      dclean_3_fix_CHAOS_fields => ycc_sales_dama0303_dclean_13_kill_chaos_fields 
+--      !! 意外:rated_passenger乱数行 无法过滤
+--      dclean_4_price_level_numerical 
+--          => ycc_sales_dama0303_dclean_13_kill_chaos_fields 
+--      dclean_5_rated_passenger_numerical 
+--          => ycc_sales_dama0303_dclean_13_kill_chaos_fields 
+--          (最终可用清洁数据集)
+-- 
+-- # Features
+-- DAMA/
+--      feature_1_numerical 
+--          <= ycc_sales_dama0303_dclean_13_kill_chaos_fields
+--          => ycc_sales_dama0303_feature_14_numerical
+--      ycmecon_econ2stats_1802
+--          <= bitb:raw/_macroeconomic/2种数值-1802.csv
+--          => ycmecon_econ2stats_1802
+--      ycmecon_econ3stats_1801
+--          <= bitb:raw/_macroeconomic/3种数值-1801.csv
+--          => ycmecon_econ3stats_1801
+--      ycmecon_econ16stats_1712
+--          <= bitb:raw/_macroeconomic/16种数值-1712.csv
+--          => (18.3.11 修复) ycmecon_econ16stats_1712
+--          
+-- LiChuan/
+--      feature_0_onehot
+--          <= ycc_sales_dama0303_dclean_13_kill_chaos_fields
+--          => ycc_sales_lichuan0303_feature_0_onehot
+--      **feature_2_base_feautres** 基础特征
+--          <= ycc_sales_dama0303_feature_14_numerical
+--          => ycc_sales_lichuan0306_feature_15_numerical 数值特征归一化
+--          <= ycc_sales_lichuan0303_feature_0_onehot
+--          => ycc_sales_lichuan0303_feature_2_base_feautres 合并 num 和 one-hot 基础特征
+--      feature_2_2_change_double    
+--          <= ycc_sales_lichuan0303_feature_2_base_feautres
+--          => ycc_sales_lichuan0307_feature_3_change_double 4个字段 str -> double
+--      feature_3_train_test
+--          <= yc_result_submit_a_baseline 
+--          <= ycc_sales_dama0303_dclean_13_kill_chaos_fields
+--          => ycc_sales_lichuan0304_feature_3_train_test 合并 训练和测试集
+--      feature_4_last_data_set
+--          <= ycc_sales_lichuan0304_feature_3_train_test
+--          => ycc_sales_lichuan0304_feature_4_data_set 作为整体数据集,起点!!!!!包含 201801 全部 class_id 轮动
+--      feature_5_log_sale
+--          <= ycc_sales_lichuan0304_feature_4_data_set 
+--          => ycc_sales_lichuan0304_feature_5_log_sale 对 sale_quantity 做 log 变换
+--      feature_6_oil_price
+--          <= ycc_sales_lichuan0304_feature_5_log_sale 
+--          => ycc_sales_lichuan0305_feature_6_oil_price 全国历史油价特征提取 
+--      feature_7_total_sale
+--          <= ycc_sales_lichuan0305_feature_6_oil_price
+--          => ycc_sales_lichuan0305_feature_7_total_sale 上个月分省市整体销量及12个月整体销量特征
+--      feature_8_time_window
+--          <= ycc_sales_lichuan0305_feature_7_total_sale
+--          <= stuff_ycc_sales_caijun0305_feature_1M_12M_12Msum
+--          => ycc_sales_lichuan0305_feature_8_time_window 并入上 1/12 月销量及12月销量和
+--      feature_9_count_classid 
+--          <= ycc_sales_lichuan0305_feature_8_time_window
+--          => ycc_sales_lichuan0306_feature_9_count_classid 当月分省市多少 class_id 在销售
+--      feature_10_year_month 
+--          <= ycc_sales_lichuan0306_feature_9_count_classid
+--          => ycc_sales_lichuan0306_feature_10_year_month 提取 year/ month 特征
+--      feature_11_how_many_month_sale
+--          <= ycc_sales_lichuan0306_feature_10_year_month
+--          => ycc_sales_lichuan0306_feature_11_how_many_month_sale 提取分省市 class_id 已经销售了多少个月
+--      feature_12_purchase_tax
+--          <= ycc_sales_lichuan0307_feature_11_how_many_month_sale 
+--          => ycc_sales_lichuan0307_feature_12_purchase_tax 购置税特征
+--      feature_13_time_window 
+--          <= ycc_sales_caijun0306_feature_sum_2m3m6m12m
+--          <= ycc_sales_caijun0306_feature_avg_2m3m6m12m
+--          <= ycc_sales_caijun0306_feature_std_2m3m6m12m
+--          => ycc_sales_lichuan0307_feature_13_time_window 并上 2/3/6/12 个月的 sum/avg/std 特征
+--      feature_14_max_min
+--          <= ycc_sales_lichuan0307_feature_13_time_window
+--          <= ycc_sales_caijun0306_feature_max_2m3m6m12m
+--          <= ycc_sales_caijun0306_feature_min_2m3m6m12m
+--          => ycc_sales_lichuan0307_feature_14_max_min
+--      feature_15_spring_festival
+--          <= ycc_sales_lichuan0307_feature_14_max_min
+--          => ycc_sales_lichuan0309_feature_15_spring_festival 是包含春节
+--      feature_16_produce_quantity
+--          <= ycc_sales_lichuan0307_feature_15_spring_festival 
+--          => ycc_sales_lichuan0307_feature_16_produce_quantity 分车型上月产量特征
+--      
+--      
+-- caijun/
+--      caijun_0313_feature_1_basewindow_minus
+--      <= ycc_sales_woody_0313_base_mix_2018_minus 
+--      => ycc_sales_caijun0313_feature_basewindow_minus
+--      caijun_0313_feature_1_max_2m3m6m12m_minus
+--      <= ycc_sales_caijun0313_feature_basewindow_minus 
+--      => stuff_ycc_sales_caijun0313_feature_max_2m3m6m12m_minus
+--      caijun_0313_feature_1_min_2m3m6m12m_minus
+--      <= ycc_sales_caijun0313_feature_basewindow_minus 
+--      => stuff_ycc_sales_caijun0313_feature_min_2m3m6m12m_minus
+--      caijun_0313_feature_1_sum_2m3m6m12m_minus
+--      <= ycc_sales_caijun0313_feature_basewindow_minus 
+--      => ycc_sales_caijun0313_feature_sum_2m3m6m12m_minus
+--      caijun_0313_feature_1_std_2m3m6m12m_minus
+--      <= ycc_sales_caijun0313_feature_basewindow_minus 
+--      => ycc_sales_caijun0313_feature_std_2m3m6m12m_minus
+--      caijun_0313_feature_1_avg_2m3m6m12m_minus
+--      <= ycc_sales_caijun0313_feature_basewindow_minus 
+--      => ycc_sales_caijun0313_feature_avg_2m3m6m12m_minus
+
+
+--      caijun_0313_feature_1_basewindow_add
+--      <= ycc_sales_woody_0313_base_mix_2018_add 
+--      => ycc_sales_caijun0313_feature_basewindow_add
+--      caijun_0313_feature_1_max_2m3m6m12m_add
+--      <= ycc_sales_caijun0313_feature_basewindow_add 
+--      => stuff_ycc_sales_caijun0313_feature_max_2m3m6m12m_add
+--      caijun_0313_feature_1_min_2m3m6m12m_add
+--      <= ycc_sales_caijun0313_feature_basewindow_add 
+--      => stuff_ycc_sales_caijun0313_feature_min_2m3m6m12m_add
+--      caijun_0313_feature_1_sum_2m3m6m12m_add
+--      <= ycc_sales_caijun0313_feature_basewindow_add 
+--      => ycc_sales_caijun0313_feature_sum_2m3m6m12m_add
+--      caijun_0313_feature_1_std_2m3m6m12m_add
+--      <= ycc_sales_caijun0313_feature_basewindow_add 
+--      => ycc_sales_caijun0313_feature_std_2m3m6m12m_add
+--      caijun_0313_feature_1_avg_2m3m6m12m_add
+--      <= ycc_sales_caijun0313_feature_basewindow_add 
+--      => ycc_sales_caijun0313_feature_avg_2m3m6m12m_add
+
+--      caijun_0313_feature_1_basewindow_shift1M
+--      <= ycc_sales_lichuan0313_traintest_method1 
+--      => ycc_sales_caijun0313_feature_basewindow_shift1M
+--      caijun_0313_feature_1_avg_2m3m6m12m_shift1M
+--      <= ycc_sales_caijun0313_feature_basewindow_shift1M 
+--      => ycc_sales_caijun0313_feature_avg_2m3m6m12m_shift1M
+--      caijun_0313_feature_1_std_2m3m6m12m_shift1M
+--      <= ycc_sales_caijun0313_feature_basewindow_shift1M 
+--      => ycc_sales_caijun0313_feature_std_2m3m6m12m_shift1M
+--      caijun_0313_feature_1_sum_2m3m6m12m_shift1M
+--      <= ycc_sales_caijun0313_feature_basewindow_shift1M 
+--      => ycc_sales_caijun0313_feature_sum_2m3m6m12m_shift1M
+--      caijun_0313_feature_1_max_2m3m6m12m_shift1M
+--      <= ycc_sales_caijun0313_feature_basewindow_shift1M 
+--      => stuff_ycc_sales_caijun0313_feature_max_2m3m6m12m_shift1M
+--      caijun_0313_feature_1_min_2m3m6m12m_shift1M
+--      <= ycc_sales_caijun0313_feature_basewindow_shift1M 
+--      => stuff_ycc_sales_caijun0313_feature_min_2m3m6m12m_shift1M
+
+--      caijun_0313_feature_1_basewindow
+--      <= ycc_sales_lichuan0313_traintest_method1 
+--      => ycc_sales_caijun0313_feature_basewindow
+--      caijun_0313_feature_1_avg_2m3m6m12m
+--      <= ycc_sales_caijun0313_feature_basewindow 
+--      => ycc_sales_caijun0313_feature_avg_2m3m6m12m
+--      caijun_0313_feature_1_std_2m3m6m12m
+--      <= ycc_sales_caijun0313_feature_basewindow 
+--      => ycc_sales_caijun0313_feature_std_2m3m6m12m
+--      caijun_0313_feature_1_sum_2m3m6m12m
+--      <= ycc_sales_caijun0313_feature_basewindow 
+--      => ycc_sales_caijun0313_feature_sum_2m3m6m12m
+--      caijun_0313_feature_1_min_2m3m6m12m
+--      <= ycc_sales_caijun0313_feature_basewindow 
+--      => stuff_ycc_sales_caijun0313_feature_min_2m3m6m12m
+--      caijun_0313_feature_1_max_2m3m6m12m
+--      <= ycc_sales_caijun0313_feature_basewindow 
+--      => stuff_ycc_sales_caijun0313_feature_max_2m3m6m12m
+--      caijun_0306_feature_1_min_2m3m6m12m
+--      <= ycc_sales_caijun0305_feature_basewindow 
+--      => stuff_ycc_sales_caijun0307_feature_min_2m3m6m12m
+--      
+--      caijun_0306_feature_1_max_2m3m6m12m
+--      <= ycc_sales_caijun0305_feature_basewindow 
+--      => stuff_ycc_sales_caijun0307_feature_max_2m3m6m12m
+--      
+--      caijun_0307_feature_checknull，为了避免服务器问题导致的Null问题，检查240个feature是否存在null值，如有添加新的feature
+--      在此文件后追加
+--      
+--      caijun0306_feature_1_lastyear_mom
+--      <= ycc_sales_lichuan0304_feature_4_data_set 
+--      => ycc_sales_caijun0306_feature_lastyear_mom
+--      
+--      caijun0306_feature_1_std_2m3m6m12m
+--      <= ycc_sales_caijun0305_feature_basewindow 
+--      => ycc_sales_caijun0306_feature_std_2m3m6m12m
+--      
+--      caijun0306_feature_1_avg_2m3m6m12m
+--      <= ycc_sales_caijun0305_feature_basewindow 
+--      => ycc_sales_caijun0306_feature_avg_2m3m6m12m
+--      
+--      caijun0306_feature_1_sum_2m3m6m12m
+--      <= ycc_sales_caijun0305_feature_basewindow 
+--      => ycc_sales_caijun0306_feature_sum_2m3m6m12m
+--      
+--      caijun_0305_feature_1_basewindow
+--      <= ycc_sales_lichuan0305_feature_6_oil_price
+--      => ycc_sales_caijun0305_feature_basewindow 偏移1、2、3、4、5、6、7、8、9、10、11、12个月的基础窗口
+--      
+--      caijun_0305_feature_1_window_1m_12m_12msum  
+--      <= ycc_sales_caijun0305_feature_basewindow
+--      => stuff_ycc_sales_caijun0305_feature_1M_12M_12Msum 使用基础窗口数据集提取偏移1、12个月的销量
+--      和偏移12个月的销量和
+-- Woody/
+--      销量日期合并基础表
+--      <=ycc_sales_lichuan0312_feature_16_produce_quantity_shift1m
+--      =>ycc_sales_woody_0313_base_mix_2018_add
+--      =>ycc_sales_woody_0313_base_mix_2018_minus
+--      =>ycc_sales_woody_0313_base_mix_2018_mul
+--      =>ycc_sales_woody_0313_base_mix_2018_div 
+--      产量日期合并
+--      <=yc_passenger_car_yields
+--      <=ycc_sales_lichuan0312_feature_16_produce_quantity_shift1m
+--      =>ycc_sales_woody_0313_base_produce_mix_2018_add
+--      =>ycc_sales_woody_0313_base_produce_mix_2018_minus
+--      =>ycc_sales_woody_0313_base_produce_mix_2018_mul
+--      =>ycc_sales_woody_0313_base_produce_mix_2018_div
+--               
+-- # Models
+-- LiChuan/
+--      dataset_1_time_window
+--      <= ycc_sales_lichuan0307_feature_14_max_min
+--      <= ycc_sales_lichuan0307_feature_3_change_double
+--      => ycc_sales_lichuan0307_traintest_1_time_window 合体训练测试集
+--      => ycc_sales_lichuan0307_trainset_1_time_window 训练集1 201301-201709        
+--      => ycc_sales_lichuan0307_testset_1_time_window  测试集1 201710  
+--      => ycc_sales_lichuan0307_trainset_2_time_window 训练集2 201302-201710        
+--      => ycc_sales_lichuan0307_testset_2_time_window  测试集2 201711    
+--      => ycc_sales_lichuan0307_trainset_3_time_window 训练集3 201303-201711        
+--      => ycc_sales_lichuan0307_testset_3_time_window  测试集3 201712    
+--      => ycc_sales_lichuan0307_train_time_window   训练集 201304-201712
+--      => ycc_sales_lichuan0307_test_time_window    测试集 201801
+--      dataset_2_max_min
+--      <= ycc_sales_lichuan0307_traintest_1_time_window 合体训练测试集
+--      => ycc_sales_lichuan0309_traintest_2_max_min 去掉空值的合体训练测试集
+--      => ycc_sales_lichuan0309_trainset_1_max_min训练集1 201301-201709        
+--      => ycc_sales_lichuan0309_testset_1_max_min  测试集1 201710  
+--      => ycc_sales_lichuan0309_trainset_2_max_min 训练集2 201302-201710        
+--      => ycc_sales_lichuan0309_testset_2_max_min  测试集2 201711    
+--      => ycc_sales_lichuan0309_trainset_3_max_min 训练集3 201303-201711        
+--      => ycc_sales_lichuan0309_testset_3_max_min  测试集3 201712    
+--      => ycc_sales_lichuan0309_train_max_min   训练集 201304-201712
+--      => ycc_sales_lichuan0309_test_max_min    测试集 201801
+--      dataset_3_2012
+--      <= ycc_sales_lichuan0309_traintest_2_max_min 去掉空值的合体训练测试集
+--      => ycc_sales_lichuan_2012_trainset_1_max_min 训练集1 201201-201611
+--      => ycc_sales_lichuan_2012_trainset_2_max_min 训练集2 201201-201612
+--      => ycc_sales_lichuan_2012_trainset_3_max_min 训练集3 201301-201611
+--      => ycc_sales_lichuan_2012_trainset_4_max_min 训练集4 201301-201612
+--      => ycc_sales_lichuan_201702_testset_max_min 测试集 201702
+--      => ycc_sales_lichuan_201217_trainset_1_max_min 训练集1 201201-201709
+--      => ycc_sales_lichuan_201217_trainset_2_max_min 训练集1 201201-201710
+--      => ycc_sales_lichuan_201217_trainset_3_max_min 训练集1 201201-201711
+--      dataset_shift1m
+--      <= ycc_sales_lichuan0312_feature_16_produce_quantity_shift1m
+--      <= ycc_sales_lichuan0307_feature_3_change_double
+--      => ycc_sales_lichuan0312_traintest_1_produce_quantity_shift1m 合体训练测试集       
+--      => ycc_sales_lichuan0312_trainset_1_produce_quantity_shift1m 训练集 201201-201709        
+--      => ycc_sales_lichuan0312_testset_1_produce_quantity_shift1m  测试集 201710       
+--      => ycc_sales_lichuan0312_trainset_2_produce_quantity_shift1m 训练集 201202-201710        
+--      => ycc_sales_lichuan0312_testset_2_produce_quantity_shift1m  测试集 201711         
+--      => ycc_sales_lichuan0312_trainset_3_produce_quantity_shift1m 训练集 201203-201711        
+--      => ycc_sales_lichuan0312_testset_3_produce_quantity_shift1m  测试集 201712     
+--      => ycc_sales_lichuan0312_train_produce_quantity_shift1m   训练集 201204-201712
+--      => ycc_sales_lichuan0312_test_produce_quantity_shift1m       测试集 201801
+--      dataset_shift1m_2012
+--      <= ycc_sales_lichuan0312_traintest_1_produce_quantity_shift1m 合体训练测试集
+--      => ycc_sales_lichuan_2012_trainset_1_shift1m 训练集1 201201-201611
+--      => ycc_sales_lichuan_2012_trainset_2_shift1m 训练集2 201201-201612
+--      => ycc_sales_lichuan_2012_trainset_3_shift1m 训练集3 201301-201611
+--      => ycc_sales_lichuan_2012_trainset_4_shift1m 训练集4 201301-201612
+--      => ycc_sales_lichuan_201702_testset_shift1m 测试集 201702  
+--              
+--              
