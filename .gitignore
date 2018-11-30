@@ -1,5 +1,6 @@
 _chaos/
 
+*.csv
 *.pdf
 
 *.htm
