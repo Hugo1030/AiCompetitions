@@ -109,43 +109,5 @@
     + ../raw/ZQ/train0224twin_decay.csv
 
 
-..
-> LiChuan's flow
-
-### 18.2.24 DAMA review
-
-复制并修订对应路径
-
-> 运行: 
-$ python LCh1saledata.py
-
-获得:
-
-- raw/ZQ/
-    + LCh1_test_featuretest.csv
-    + LCh1_trainSaleDatetest.csv
-
-其中: LCh1_trainSaleDatetest.csv
-检测:
-
-_tmp = train.loc[:,['class_id','sale_date','sale_quantity']]
-print(_tmp[_tmp.class_id == 2])
-
-...
-
-
-      class_id  sale_date  sale_quantity
-119        2.0        0.0            0.0
-259        2.0        0.0            0.0
-399        2.0        0.0            0.0
-539        2.0        0.0            0.0
-679        2.0        0.0            0.0
-...
-
-明确有 class_id 为 2 的数据项...
-
---> ipynb/caijun/caijun0225bugfix.ipynb 追查明确,
-并升级对应代码
-
 
 
