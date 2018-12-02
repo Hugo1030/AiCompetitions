@@ -18,6 +18,6 @@
     +- src          ~> 可复用的脚本/模块收集
 
 ## 项目指北
-- [S1 策略及代码](https://github.com/Hugo1030/AiCompetitions/tree/master/fashionai/ipynb/S1_%E5%B1%9E%E6%80%A7%E6%A0%87%E7%AD%BE%2BRank79%2BDu4AI)
+- [S1 策略及代码](https://github.com/Hugo1030/AiCompetitions/tree/master/fashionai/ipynb/S1_Attribute%2BRank79%2BDu4AI)
 - [S2 ]()
 - [基于SSD的人体检测并裁剪](https://github.com/Hugo1030/AiCompetitions/tree/master/fashionai/ipynb/LiChuan/SSD_crop)
