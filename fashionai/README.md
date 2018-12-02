@@ -1,4 +1,4 @@
-# FasionAI 39rank solution
+# FasionAI rank39/2950 solution
 \~ 天池大赛 [FasionAI 全球挑战赛](https://tianchi.aliyun.com/competition/introduction.htm?spm=5176.100066.0.0.6acd33aft1JqW3&raceId=231649) 项目入口
 
 ## 当前目录

@@ -1,4 +1,4 @@
-# Du4AI:天池-印象盐城-乘用车销量预测竞赛第 11 名
+# tianchi/car_sales_forcast 11/2500 solution
 
 \~ 天池大赛[印象盐城]项目入口
 * [比赛官网](https://tianchi.aliyun.com/competition/introduction.htm?spm=5176.11165320.5678.1.6650507fyL6DVh&raceId=231640)
