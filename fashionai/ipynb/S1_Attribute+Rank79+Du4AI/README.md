@@ -23,12 +23,14 @@ Project
 python 3.6
 
 ## 主要依赖库：
-opencv
-numpy 
-pandas
-matplotlib
-sklearn
-keras
+```
+tensorflow 1.4.0
+numpy 1.14.2
+pandas 0.23.3
+matplotlib 2.1.0
+sklearn 0.19.1
+keras 2.1.3
+```
 
 ## collar属性
 collar 属性由4个模型的预测结果融合而成，这4个模型分别是
