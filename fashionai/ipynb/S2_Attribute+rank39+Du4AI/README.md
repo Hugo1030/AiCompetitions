@@ -1,4 +1,4 @@
-# FashionAI S2 策略
+# FashionAI S2 策略 -- rank39
 
 ## 目录结构
 ```
