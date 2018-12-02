@@ -1,5 +1,3 @@
->>> [基础版本 解题思路](../../doc/LogLiChuanIdea.md)
-
 >>> 竞赛 代码流
 
 LiChuan0131FeatureEngineer.ipynb ~> 
