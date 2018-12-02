@@ -1,0 +1,222 @@
+# LiChuan
+> S17E51
+
+## DONE
+- [x] [Home Credit Default Risk](https://www.kaggle.com/c/home-credit-default-risk#description)
+    - [x] 仔细阅读赛题描述和数据说明, 以及评价指标(Auc)
+    - [x] 拿出一个屎版 Baseline, Auc=0.795
+    - [x] 浏览全部 Kernel 及 Discuss 了解现有阶段, 大家的进展情况
+    - [x] 阅读相关论文, 确认自己没有错过最新进展
+        - [x] LightGBM 论文
+        - [x] XGBoost 论文
+    - [x] 数据分析, 和划分准确的线下验证集(val_set)
+    - [x] 数据预处理, 特征工程, 训练模型
+
+## Planning
+- [Home Credit Default Risk](https://www.kaggle.com/c/home-credit-default-risk#description) 竞赛流程
+    - [x] 贝叶斯超参数选取研究
+        - [x] 用 BO 方法找到 XGBoost 的最佳参数
+    - [x] 细作特征工程
+    - [x] 错误预测分析, 重新修正模型
+        - 将离群点去掉做一个模型
+        - 将离群点按照上下值替换做一个模型
+    - [x] 模型融合
+        - [x] xgboost * 0.4 + lightgbm * 0.6 = 795
+    - [x] 对比测试 Kaggle 的 Kernel 和本地 mac 运行速度
+- [光伏电站人工智能运维大数据处理分析](http://www.datafountain.cn/competitions/303/details/rank?id=56611&sch=1331&page=8&type=A)
+    - [x] 删除离群点, 清洗数据表格
+    - [x] 使用贝叶斯算法寻找 xgboost/lightgbm 的超参数
+    - [x] 训练时丢弃离群点, 测试时, 使用原有数据-没有必要这样做
+    - [x] 注意训练集的采样方式, 可以用 index 均匀采样
+        - 随机采样, 效果有限
+    - [x] 使用 weight average 融合测试
+        - 融合结果错误
+    - [x] 去掉风向/风速来看看效果如何
+        - 直接使用 select model 降维了
+    - [x] 使用 Poly 和 select model
+        - 使用 poly + select + 数据清洗: +0.013
+        - lightgbm 不进行 select : +0.017
+    - [x] 测试  GBDT 的成绩和结果
+    - [x] 使用 zooopt 来寻找最佳权重
+        - zooopt 是一个优化算法, 似乎并不是用来寻找权重的
+    - [x] 测试使用全部数据集结果
+        - 效果明显 + 0.001
+    - [ ] 寻找 kaggle/天池 过去回归问题的解题方式
+        - [ ] 找到类似比赛问题
+        - [ ] 重点关注数据清洗手法
+        - [ ] 重点关注特征工程手法
+    - [x] 测试 RandomForest
+        - 0.8395 和 xgboost 差不多
+    - [x] 给 crestle 发邮件
+    - [x] 尝试使用 stacked
+    - [x] Hard example + 0.006
+        - [x] 统计离群点特征
+            - 全部为 0 的值
+            - -30 < 现场温度 < 40
+            - 转换效率(ABC) > 800
+            - 电压(ABC) < 500
+        - [x] 不包含离群点一个模型
+        - [x] 只针对离群点一个模型
+
+## Reference
+- [Introduction: Random vs Bayesian Optimization Model Tuning](https://www.kaggle.com/willkoehrsen/model-tuning-results-random-vs-bayesian-opt)
+- [BayesianOptimization-xgboost_example.py](https://github.com/fmfn/BayesianOptimization/blob/master/examples/xgboost_example.py)
+- [Simple Bayesian Optimization for LightGBM](https://www.kaggle.com/sz8416/simple-bayesian-optimization-for-lightgbm)
+- [Magic Of Weighted Average Rank [0.80]](https://www.kaggle.com/shaz13/magic-of-weighted-average-rank-0-80)
+- [Encoding](http://www.saedsayad.com/encoding.htm)
+
+## Changelog
+- 18.8.17
+    - 使用上下值均值来替换离群点
+        - 保留小数点后一位, 并四舍五入
+        - `round(x, 1)`
+        - 采用 head 和 tail 地标是否数据 Index 集合来找到前后值
+    - 不能直接使用 `df_all.loc[现场温度_index]['现场温度'] = values` 来修改表格数据
+        - `df_all.loc[现场温度_index, '现场温度'] = values`
+        - 格式为 `df.loc[index, feature] = values` 来修改数据, 不能直接修改
+    - 清洗过后的数据集保存为 `cleaned_data.csv`
+- 18.8.14
+    - 如何找到 panda 里面的离群点, 并且使用均值替换
+- 18.8.13
+    - 昨天阿虎提到一个, 能不能试一下 stacking 是否能提高, 做 mean/median/std
+        - 这个也不好用
+    - 检验完成以后, 换个思路, 不去追求极端好成绩, 而是整理一下思路, 复盘一下代码, 提高一下感觉
+    - 电压/电流=电阻, 这个 feature 看有没有用?
+- 18.8.12
+    - 重点考虑, 功率和效率之间的关系, 可以他们之间相乘, 然后求平均
+    - 对功率和效率都做 mean/median/std, 结果下降很多, Lightgbm线下=0.8418
+    - 这两种方案在 Lightgbm 上都折戟沉沙, 试试 stack 的效果
+- 18.8.11
+    - 每个平均功率/取前 9 个值的, max/min/mean/median/std
+    - 平均效率的 平均值
+- 18.8.10
+    - 如果都加上 Id, 则对最终结果影响太大, 融合后效果反而下降
+    - 测试在原来 stacking 基础上增加 id 作为 feature, 结果提升了
+- 18.8.8
+    - 增加一个关键 Feature, old平均功率
+- 18.8.7
+    - 去掉离群点做一个特征集合, clean_data, 并预测一个模型
+    - 将离群点加入, 全部预测结果, 将
+- 18.8.6
+    - pandas 去行数据 `df.loc[0]`
+    - pandas 读取中文 `pd.read_csv(xxx, encoding = "gb2312")`
+- 18.8.5
+    - 全数据融合
+- 18.8.4
+    - lightgbm 两个版本成绩最高, 尝试自己跟自己融合
+        - 融合结果并不好, 和其中最高的版本成绩接近
+- 18.8.3
+    - xgboost 调参过后并没有取得更好的成绩
+    - lightgbm 放开了参数选择范围后, 并没有取得更好的成绩
+    - BO 调参的方法, 并非十分有效, 不过它可以帮助我们思考参数选择的范围.
+- 18.8.2
+    - pandas.DataFrame.rank
+    - 实际上使用 weight average 没有效果
+- 18.8.1
+    - 数据清洗过后, 结果有了极大提升
+    - 二项式特征制造 [Sklearn-PolynomialFeatures()](https://blog.csdn.net/CherDW/article/details/55826453)
+    - 特征选取 [1.13. 特征选择](http://sklearn.apachecn.org/cn/0.19.0/modules/feature_selection.html)
+    - 是否不进行二项式变换, 和 select, xgboost 的成绩会更好
+    - 只进行 select, xgboost 成绩会怎样?
+- 18.7.31
+    - 清洗数据表格里面的离群点, 重做 xgboost 模型
+        - 线下 0.8911, 但是线上 score 0.7629, 严重的过拟合了
+        - 离群点删掉了关键信息, rmse 对大值误差敏感, 可能会有不和常理的大值存在
+    - 关键点
+        - train_set 数据里面有非常多的 0 值点, 然后这些发电量全都是 0.379993
+        - test_set 里面也有这些点 46 个
+        - 定位异常值, 使用大于或小于平均值的 +- 2倍方差来定位
+        - 然后使用上下值的平均数来作为填充
+- 18.7.30
+    - 理解 one-hot 及 target-based encoding [Encoding](http://www.saedsayad.com/encoding.htm)
+        - 在类别较多的情况下
+        - 如果 target 是 0/1, 那么使用每种类型的**概率**来编码
+        - 如果 target 是 数值, 那么使用每种类型的 target **均值**来编码
+        - 在 lightGBM 里面, 直接采用 One-hot 编码就行了, 模型会自动调整
+- 18.7.29
+    - 连续数值型特征, 是按照数值进行编码, 还是直接用 one-hot 编码, 哪个效果更好?
+        - 更倾向于连续类别用数值, 独立类别 <4 用 One-hot, >4 是否使用 target encoding
+        - 需要测试一下
+- 18.7.28
+    - 解决 `fatal: Unable to create '/Users/hugo/Projects/debuguself/DU4ai/.git/index.lock': File exists.` 问题
+    - 输入 `rm -f /Users/hugo/Projects/debuguself/DU4ai/.git/index.lock` 即可
+- 18.7.27
+    - 直接使用 lightgbm * 0.6 + xgboost * 0.4 融合结果是 0.799, 那么看来使用 weight average 的方法还是有一定的效果
+    - 跟新 pip `pip3 install --upgrade pip`
+    - 然后更新 pandas `pip3 install --upgrade pandas`
+- 18.7.26
+    - 直接使用 kaggle 的 Kernel 进行游戏
+    - 显示全部缺值并排序
+        - `total = df.isnull().sum().sort_values(ascending = False)`
+    - 显示缺值百分比
+        - `percent = (df.isnull().sum() / df.isnull().count()).sort_values(ascending = False)`
+    - 将数字即百分比连接起来展示
+        - `pd.concat([total, percent], axis=1, keys=['total', 'percent'])`
+    - 有多少人不还钱
+        - 
+    - 直接使用 kernel 可能会遇到不可控的因素, 比如正在运行, 不知道如何停止, 可能会有其他麻烦, 尽量还是本地, 慎用.
+- 18.7.25
+    - 由于简单线性加权融合效果并不好, 尝试其他融合方法 [Magic Of Weighted Average Rank [0.80]](https://www.kaggle.com/shaz13/magic-of-weighted-average-rank-0-80)
+    - 并没有什么卵用... 还是 795
+    - 融合还是有点作用的, 用 tidy_xgb_0.78889 和 lightgbm 融合, 结果能提高 0.002
+    - 剩下的就是看如何提高特征工程的结果了.
+    - 测试一下 weight average 的效果
+    - 继续测试 submission_0725c 的结果如何, 看看 weighted average 到底有没有作用?
+- 18.7.24
+    - XGBoost 使用 Kflod 方法, 在本机上跑 cv = 5 基本跑不动
+    - 直接使用别人已经调好的参数, 跑出模型看看
+    - 将参数中的 silent = 0 调整为 0 了, 为什么还是不见模型在跑, 会不会模型一直没有跑动?
+        - 看 CPU 是在跑动, 现在最大的问题是, 不知道模型需要跑多长时间.
+    - 好吧过了一段时间之后, 结果开始出来了, 看来 xgboost 跑还是可行的..
+    - 让人看到进度是有必要的, 不能放入黑盒, 就是要看看运行情况, 特别是速度特别慢的时候.
+    - `verbose_eval=100` 是控制运行多少轮打印出来.
+    - 运行好的模型 xgboost 保存 `bst.save_model('xgb.model')`
+    - 加载模型 [XGBoost 模型保存，读取](https://blog.csdn.net/SZU_Hadooper/article/details/79050483)
+    ```
+    # load model and data in
+    bst2 = xgb.Booster(model_file='xgb.model')
+    dtest2 = xgb.DMatrix('dtest.buffer')
+    preds2 = bst2.predict(dtest2)
+    ```
+    - xgboost sub = 0.792
+    - 简单模型融合
+    - 融合以后居然没什么效果, 最终就过依然还是 795, 太神奇了...
+- 18.7.23
+    - 用别人已经调好的 XGBoost 参数, 跑一下咱们自己的表格试试看
+    - 直接使用 xgb.cv() 这个函数来跑 cv 结果
+    - 感觉很有必要使用 kaggle 的 kernel , 不然自己机器跑模型的时候没法干其他的事了
+- 18.7.22
+    - 将 train set 进行分离
+        - `train[train['TARGET'].notnull()]`
+    - 获取 X 和 y
+        - `y = train_df['TARGET']`
+        - `feats = [f for f in train_df.columns if f not in ['TARGET','SK_ID_CURR','SK_ID_BUREAU','SK_ID_PREV','index']]`
+        - `X = train_df[feats]`
+    - XGBoost 获取目标函数 AUC
+    - 时间太长了, 2个小时还没跑出来一个.
+    - 看一下, 有没有直接的 xgboost 参数
+- 18.7.21
+    - 通过不断迭代高斯进程(GP)来对目标函数进行优化, 寻找最佳参数
+    - 简单使用可参考, usage.py
+    - 如果有预设值, 可以使用 `bo.explore` 和 `bo.initialize` 来进行预设
+    - [UCB Upper Confidence Bound](https://zhuanlan.zhihu.com/p/21388070)
+    - 通过不同的超参数, 和优化函数, 来控制 EE (Exploitation vs Exploration) 开发和探索
+    - 用 `from sklearn.datasets import make_classification` 来生成 dataset, 很方便做验证
+    - 报错 `ParserError: Error tokenizing data. C error: Expected 132 fields in line 188321, saw 133`
+        - 发现最后一行数据错误, 可删除
+        - 解决办法 [Python Pandas Error tokenizing data](https://stackoverflow.com/questions/18039057/python-pandas-error-tokenizing-data) 使用 `data = pd.read_csv('file1.csv', error_bad_lines=False)` 即可.
+        - 且增加一句 `train = train[:-1]`
+    - lgb 的 BO 方法 
+- 18.7.20
+    - np.linspace(start, stop, num=50), 在开始结束范围内均匀给出数字. 返回 array
+    - 为了在给出的参数空间内, 找到使目标函数值最大化, 至少需要计算 2 次来启动算法, 这可以由用户给出, 也可以随机取得.
+- 18.7.19
+    - 学习在 home credit 这个比赛中, 使用超参数自动获取的方法, 特别是贝叶斯的方法
+    - random search 可能会获得一个更好的值
+    - 贝叶斯优化将倾向于集中在一组值, 产生更高的分数
+    - 如果我们走的是平均值, 那么贝叶斯优化是明显的赢家。如果我们想要得到高分, 那么随机搜索就会胜出。
+    - 贝叶斯随着迭代次数上升,而成绩上升, 而随机搜索似乎没有明显的规律.
+
+## Errors
+- UnicodeDecodeError: 'utf-8' codec can't decode byte 0xbc in position 2: invalid start byte
+    - 直接读取中文 `df_train = pd.read_csv('../raw/train.csv', encoding = "gb2312")`
