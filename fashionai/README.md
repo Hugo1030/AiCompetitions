@@ -18,5 +18,5 @@
     +- src          ~> 可复用的脚本/模块收集
 
 ## 项目指北
-- [S1 策略及代码]()
+- [S1 策略及代码](https://github.com/Hugo1030/AiCompetitions/tree/master/fashionai/ipynb/属性标签%2BRank79%2BDu4AI)
 - [S2 ]
