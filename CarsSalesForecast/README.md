@@ -1,4 +1,4 @@
-# Du4AI:天池-印象盐城-乘用车销量预测竞赛
+# Du4AI:天池-印象盐城-乘用车销量预测竞赛第 11 名
 
 \~ 天池大赛[印象盐城]项目入口
 * [比赛官网](https://tianchi.aliyun.com/competition/introduction.htm?spm=5176.11165320.5678.1.6650507fyL6DVh&raceId=231640)
@@ -19,3 +19,8 @@
 |- requirements.txt ~ 依赖模块自动安装声明
 +- src          ~> 可复用的脚本/模块收集
 ```
+
+## 项目指北
+- [S1 ipynb 探索流程](https://github.com/Hugo1030/AiCompetitions/blob/master/CarsSalesForecast/ipynb/LiChuan/README.md)
+- [S1 脚本 flow](https://github.com/Hugo1030/AiCompetitions/blob/master/CarsSalesForecast/src/README.md)
+- [S2b榜算法陈述](https://github.com/Hugo1030/AiCompetitions/blob/master/CarsSalesForecast/doc/s2b_story_lichuan.md [S1 脚本 flow](https://github.com/Hugo1030/AiCompetitions/blob/master/CarsSalesForecast/src/README.md))
