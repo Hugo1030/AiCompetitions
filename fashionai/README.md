@@ -18,5 +18,8 @@
 
 ## 项目指北
 - [S1 策略说明 + Code](https://github.com/Hugo1030/AiCompetitions/tree/master/fashionai/ipynb/S1_Attribute%2BRank79%2BDu4AI)
-- [S2 策略说明 + Code]()
-- [基于SSD的人体检测并裁剪](https://github.com/Hugo1030/AiCompetitions/tree/master/fashionai/ipynb/LiChuan/SSD_crop)
+- [S2 策略说明 + Code](https://github.com/Hugo1030/AiCompetitions/tree/master/fashionai/ipynb/S2_Attribute%2Brank39%2BDu4AI)
+- [基于 SSD 的领口裁剪](https://github.com/Hugo1030/AiCompetitions/tree/master/fashionai/ipynb/S2_Attribute%2Brank39%2BDu4AI/collar_crop)
+    - 第一步: 检测人脸
+    - 第二步: 定位领口部位
+    - 第三步: 进行裁剪

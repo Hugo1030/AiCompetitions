@@ -23,20 +23,25 @@ keras 2.1.3
 
 - [round1]()
 - [round2]()
+- [SSD 定位领口]()
+    - 使用 SSD 定位到脸部, 然后取
 
 ### 图像预处理
 - 
 
 ### 训练
 - 所有模型的训练集分为两类，一类是切分了训练集和验证集的，使用切分的训练集进行训练，另一类是使用所有训练集进行训练
-- 
-- batchsize为64
-- 训练分为两个阶段，第一阶段的学习率为0.001，当loss不再提升时，进入第二阶段，将学习率降低到0.0001，继续训练直到loss不再提升
+- batch_size = 32, 防止显存溢出.
+- learing_rate decay
+    - epoch 1, lr = 0.001
+    - epoch 2, lr = 0.0001
 
 ### 模型
-- 一共使用了两种预训练模型分别是 InceptionResNetV2 和 xception
-- 所有预训练模型使用相同的处理方式，去掉自带的输出层，接上和分类对应的 softmax 层
-- 损失函数统一使用 categorical_crossentropy
+- 使用预制模型 InceptionResNetV2 + xception
+- 去掉预制模型 输出层
+- 增加 pooling 层
+- 增加 dropout = 0.5 防止过拟合
+- 增加 softmax, 根据
 
 ### TTA
 - 边缘填充 + 水平翻转 + 直方图 + 对比拉伸
@@ -45,4 +50,5 @@ keras 2.1.3
 - v2 collar.best0601a_InceptionResNetV2_comb.h5 209M => collar_0601b_InceptionResNetV2.csv 4 种 tta
 - xception collar.best0531a_Xception.h5 80M => collar_0601a_Xception.csv 4 种 tta
 
----
+### 全部合并
+- 全部 8 种类型与 collar 类似处理, 然后直接 Merge 提交.
