@@ -19,4 +19,33 @@
     +- src          ~> 可复用的脚本/模块收集
 
 ## 项目指北
--
+- [最终代码](https://github.com/Hugo1030/AiCompetitions/blob/master/PhotovoltaicPowerStation/ipynb/lichuan/lichuan_0809_stacked.ipynb)
+
+### 数据清洗
+- 清除所有离群点
+    - 电压A > 800 | 电压A < 500
+    - 电压B > 800 | 电压B < 500
+    - 电压C > 800 | 电压C < 500
+    - 现场温度 > 30 | 现场温度 < -30
+    - 转换效率A > 100
+    - 转换效率B > 100
+    - 转换效率C > 100
+    - 风向 > 360
+    - 风速 > 20
+- 发现训练集中有很多 0 值点, 结果为 0.379993053, 那么将测试集所有 0 值点改为此数值
+- 大于或小于 2 倍标准差, 使用上下均值填充(因为上下顺序是有规律的渐变点)
+
+### 特征工程
+- 为了找到数据之间关系, 使用 PolynomialFeatures 类, 暴力做二项式 features
+- 除了原有单因子外, 因子两两之间 x, y 寻找关系
+- 生成 (x + y)^3 的二项式系数
+- 在使用 SelectFromModel 筛选出相关系数较高的特征.
+
+### 建立模型
+- 分别使用 xgboost/gbdt/randomforest/lightgbm 并选择 3 种不同参数, 分别预测最终结果
+
+### 模型融合
+- 将 xgboost/gbdt/randomforest/lightgbm 训练出来的每 3 种共 12 个模型, 进行 stacking
+- 使用 svr 对 12 个模型进行最终筛选
+- 使用 5 Flods 交叉验证
+- 得到的 stacking 预测结果再和 lightgbm 单独预测结果进行线性融合, 得到最终结果.
