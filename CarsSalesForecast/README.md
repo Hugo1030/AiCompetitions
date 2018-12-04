@@ -22,8 +22,6 @@
 
 ## 项目指北
 
-内容较多, 请看链接~
-
-- [S1 ipynb 探索流程](https://github.com/Hugo1030/AiCompetitions/tree/master/CarsSalesForecast/ipynb/LiChuan)
-- [S1 脚本 flow](https://github.com/Hugo1030/AiCompetitions/blob/master/CarsSalesForecast/src)
-- [**S2 算法回顾**](https://github.com/Hugo1030/AiCompetitions/blob/master/CarsSalesForecast/doc/s2b_story_UNION.md)
+- [S1 策略及代码](https://github.com/Hugo1030/AiCompetitions/tree/master/CarsSalesForecast/ipynb/LiChuan)
+- [S1 脚本脚本](https://github.com/Hugo1030/AiCompetitions/blob/master/CarsSalesForecast/src)
+- [S2 算法回顾](https://github.com/Hugo1030/AiCompetitions/blob/master/CarsSalesForecast/doc/s2b_story_UNION.md)
